@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  password    String
+  displayName String
+  balance     Float    @default(10000)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  watchlist     Watchlist[]
+  trades        Trade[]
+  chatMessages  ChatMessage[]
+  notifications Notification[]
+  priceAlerts   PriceAlert[]
+}
+
+model Watchlist {
+  id     String   @id @default(cuid())
+  userId String
+  symbol String
+  name   String
+  type   String   @default("stock")
+  addedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol])
+}
+
+model Trade {
+  id        String   @id @default(cuid())
+  userId    String
+  symbol    String
+  type      String
+  quantity  Float
+  price     Float
+  total     Float
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  message   String
+  symbol    String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+model PriceAlert {
+  id          String   @id @default(cuid())
+  userId     String
+  symbol      String
+  type        String   @default("stock")
+  targetPrice Float
+  direction   String
+  triggered   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, triggered])
+}
